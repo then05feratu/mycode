@@ -1,0 +1,26 @@
+---
+- name: Create users from wed_challenge_names.yml
+  hosts: planetexpress
+  become: yes  # Use sudo to execute tasks as root
+
+  tasks:
+    - name: Include list of names from external file
+      include_vars:
+        file: ~/mycode/vars/wed_challenge_names.yml
+        name: usernames
+
+    - name: Create users
+      user:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ usernames.usernames }}"
+          #with_items: "{{ users_list.usernames }}"
+
+    - name: Install figlet using the package module
+      package:
+        name: figlet
+        state: present
+
+    - name: Show completion message
+      debug:
+        msg: "I’ve completed the challenge!"
