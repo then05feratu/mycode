@@ -1,0 +1,56 @@
+---
+- name: Friday Challenge
+  hosts: working
+
+  vars_prompt:
+    - name: favorite_color
+      prompt: "What is your favorite color?"
+      private: no
+
+  tasks:
+
+    - name: Ensure the color directory exists
+      file:
+        path: ~/color
+        state: directory
+
+    - name: Create color.txt with the favorite color
+      copy:
+        content: "{{ favorite_color }}"
+        dest: ~/color/color.txt
+
+    - name: Ensure the secret directory exists
+      file:
+        path: ~/secret
+        state: directory
+
+    - name: Copy secret.txt from controller to hosts
+      copy:
+        src: ~/mycode/fri_challenge/secret.txt
+        dest: ~/secret/secret.txt
+
+  post_tasks:
+    - name: Verify color.txt exists and contains the favorite color
+      shell: |
+        grep -q "{{ favorite_color }}" ~/color/color.txt && echo "color.txt is correct" || echo "color.txt is incorrect"
+      register: color_check
+      changed_when: false
+
+    - name: Verify secret.txt exists
+      stat:
+        path: ~/secret/secret.txt
+      register: secret_file
+
+    - name: Ensure color.txt is correct
+      debug:
+        msg: "{{ color_check.stdout }}"
+
+    - name: Ensure secret.txt is copied
+      fail:
+        msg: "secret.txt was not found!"
+      when: not secret_file.stat.exists
+
+    - name: Confirmation message for secret.txt
+      debug:
+        msg: "secret.txt was successfully copied."
+      when: secret_file.stat.exists
